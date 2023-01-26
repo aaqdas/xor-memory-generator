@@ -22,7 +22,7 @@ To run the script, use the following command
 ```
 python3 $(SRC)/make_bram.py
 ```
-$(SRC) is the directory containing script files.
+`$(SRC)` is the directory containing script files. The script will generate `xor_memory.v` file in the source directory 
 
 
 # References
