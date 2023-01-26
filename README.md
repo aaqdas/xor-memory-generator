@@ -11,7 +11,7 @@ To create a verilog module of the XOR-Memory, following must be installed before
 To install the pre-requisites use the following commands
 ```
 sudo apt-get install python3
-sudo apt-get install python-pip
+sudo apt-get install python3-pip
 pip install numpy
 ```
 
