@@ -9,17 +9,17 @@ To create a verilog module of the XOR-Memory, following must be installed before
 2. Numpy (Python Library)
 
 To install the pre-requisites use the following commands
-'''
+```
 sudo apt-get install python3
 sudo apt-get install python-pip
 pip install numpy
-'''
+```
 
 # Running the Script in Linux
 To run the script, use the following command
-'''
+```
 python3 $(SRC)/make_bram.py
-'''
+```
 When prompted, enter the read ports and write ports.
 
 
