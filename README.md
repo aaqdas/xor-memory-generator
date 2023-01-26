@@ -20,7 +20,7 @@ To run the script, use the following command
 ```
 python3 $(SRC)/make_bram.py
 ```
-When prompted, enter the read ports and write ports.
+$(SRC) is the directory containing script files.
 
 
 # References
