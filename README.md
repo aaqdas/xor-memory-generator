@@ -1,6 +1,8 @@
 # XOR-Memory Generator
 XOR-Memory is a high-bandwidth memory, designed by [1]. It can be used in Field Programmable Gate Arrays (FPGAs) to create a multi-ported memory using multiple banks of dual port memory (BRAMs). It increases memory throughput while maintaining coherency between multiple banks, thus data written on one port can be read from another port.
 
+This tool prompts the user to enter the number of read and write ports and generates Verilog HDL for XOR-Memory using Two-Port BRAM available in many FPGAs.
+
 # Pre-requisites
 To create a verilog module of the XOR-Memory, following must be installed before hand.
 1. Python 
