@@ -38,7 +38,7 @@ w_regd_top_ports = str('')
 wa_top_ports = str('')
 wa_regd_top_ports = str('')
 
-for i in range(0,read_ports):
+for i in range(0,write_ports):
     w_top_ports = w_top_ports + 'w' + str((i+1)) + ','
     w_regd_top_ports = w_regd_top_ports + f'w{str((i+1))}_regd' + ','
     wa_top_ports = wa_top_ports + 'wa' + str((i + 1)) + ','
@@ -63,7 +63,7 @@ with open('xor_memory.v','w') as file:
                 f"reg [DATA_WIDTH:0] dIn[{write_ports-1}:0];                          // Data to Write in Mem Banks\n")
 
     #dOut from all memory banks (Port Definition)
-    num_mem_banks = write_ports*(write_ports-1) + (read_ports)**2
+    num_mem_banks = write_ports * (read_ports + write_ports - 1)
     banks_iter = np.arange(num_mem_banks).tolist()
     dOut_iter = ["dOut" + str(s) for s in banks_iter]
 
@@ -84,11 +84,14 @@ with open('xor_memory.v','w') as file:
         file.write(f"{split_w_regd_top_ports[i]}<={split_w_top_ports[i]};\n")
     file.write("enW_regd <= enW;\n"
                "end\n")
-    for i in range(0,read_ports):
+    # print(order.flatten().size)
+    i_count = write_ports
+    j_count = read_ports + write_ports - 1
+    for i in range(0,i_count):
         print(''),
-        for j in range(0,read_ports+write_ports-1):
-            file.write(f'''simple_dual_port_ram #(.ADDR_WIDTH(ADDR_WIDTH)) stage{i*7+j}(.data(dIn[{i}]),
-                .write_addr(wa{i+1}_regd),.read_addr({"wa" if j < write_ports-1 else "ra"}{order.flatten()[i*7+j]}),.we(enW_regd[{i}]),.clk(clk),.q(dOut{i*7+j}));\n''')
+        for j in range(0,j_count):
+            file.write(f'''simple_dual_port_ram #(.ADDR_WIDTH(ADDR_WIDTH)) stage{i*j_count+j}(.data(dIn[{i}]),
+                .write_addr(wa{i+1}_regd),.read_addr({"wa" if j < write_ports-1 else "ra"}{order.flatten()[i*j_count+j]}),.we(enW_regd[{i}]),.clk(clk),.q(dOut{i*j_count+j}));\n''')
 
     file.write("always @ (*)\n"
                 "begin\n")
@@ -98,7 +101,7 @@ with open('xor_memory.v','w') as file:
         where_dIn = ["dOut" + str(s) for s in where_dIn[0]]
         file.write(f"dIn[{i-1}] = w{i}_regd ^ {' ^ '.join(where_dIn)};\n")
 
-    for i in range(1, write_ports+1):
+    for i in range(1, read_ports+1):
         where_dIn = np.where(dIn_order == -i)
         where_dIn = ["dOut" + str(s) for s in where_dIn[0]]
         file.write(f"r{i} = {' ^ '.join(where_dIn)};\n")
