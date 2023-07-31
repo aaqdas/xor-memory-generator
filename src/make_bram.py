@@ -68,8 +68,8 @@ dIn_order = np.concatenate((read_order,write_order*-1),axis=1).flatten()
 r_top_ports = str('')
 ra_top_ports = str('')
 for i in range(0,read_ports):
-    r_top_ports = r_top_ports + 'r' + str((i+1)) + ','
-    ra_top_ports = ra_top_ports + 'ra' + str((i + 1)) + ','
+    r_top_ports = r_top_ports + 'o_r' + str((i+1)) + ','
+    ra_top_ports = ra_top_ports + 'i_ra' + str((i + 1)) + ','
 
 w_top_ports = str('')
 w_regd_top_ports = str('')
@@ -77,29 +77,46 @@ wa_top_ports = str('')
 wa_regd_top_ports = str('')
 
 for i in range(0,write_ports):
-    w_top_ports = w_top_ports + 'w' + str((i+1)) + ','
+    w_top_ports = w_top_ports + 'i_w' + str((i+1)) + ','
     w_regd_top_ports = w_regd_top_ports + f'w{str((i+1))}_regd' + ','
-    wa_top_ports = wa_top_ports + 'wa' + str((i + 1)) + ','
+    wa_top_ports = wa_top_ports + 'i_wa' + str((i + 1)) + ','
     wa_regd_top_ports = wa_regd_top_ports + f'wa{str((i+1))}_regd' + ','
+
+
+    split_w_top_ports = w_top_ports.split(sep=',')
+    split_w_regd_top_ports = w_regd_top_ports.split(sep=',')
+    split_wa_top_ports = wa_top_ports.split(sep=',')
+    split_wa_regd_top_ports = wa_regd_top_ports.split(sep=',')
+
+    split_r_top_ports = r_top_ports.split(sep=',')
+    split_ra_top_ports = ra_top_ports.split(sep=',')
 
 if not os.path.isdir('./generate'):
     os.mkdir('./generate')
 
 with open(f"./generate/{op_file_name}.v",'w') as file:
     # file.write(f"module xor_memory(clk,enW,{ra_top_ports}{r_top_ports}{wa_top_ports}{w_top_ports[0:-1]});")
-    file.write(f"module xor_memory(clk,enW,{ra_top_ports}{r_top_ports}{wa_top_ports}{w_top_ports[0:-1]});\n")
+    file.write(f"module xor_memory( input clk\n"    
+               f"                  ,input i_enW\n")
+    for i in range(0,read_ports):
+        file.write(f"                  ,input [(ADDR_WIDTH-1):0] {split_ra_top_ports[i]}\n")
+        file.write(f"                  ,output reg [(DATA_WIDTH-1):0] {split_r_top_ports[i]}\n")
+    for i in range(0,write_ports):
+        file.write(f"                  ,input [(ADDR_WIDTH-1):0] {split_wa_top_ports[i]}\n")
+        file.write(f"                  ,input [(DATA_WIDTH-1):0] {split_w_top_ports[i]}\n")
+
+    file.write("                   );\n")
     file.write( f"parameter ADDR_WIDTH = {int(np.ceil(np.log2(size/(word_size/8))))};\n"
-                f"parameter DATA_WIDTH  = {word_size};\n"
-                "input clk;\n"
-                f"input [{write_ports-1}:0] enW;                                      // Write Enable\n"
-                f"input [(ADDR_WIDTH-1):0] {ra_top_ports[0:-1]};                      // read addresses\n"
-                f"input [(ADDR_WIDTH-1):0] {wa_top_ports[0:-1]};                      // read addresses\n"
-                f"input [DATA_WIDTH-1:0]    {w_top_ports[0:-1]};                      // data to write\n"
-                f"output reg [DATA_WIDTH-1:0] {r_top_ports[0:-1]};                    // data read from memory\n"
-                f"reg [ADDR_WIDTH-1:0] {wa_regd_top_ports[0:-1]};                     // registered wa\n"
+                f"parameter DATA_WIDTH  = {word_size};\n")
+                # "input clk;\n"
+                # f"input [{write_ports-1}:0] enW;                                      // Write Enable\n"
+                # f"input [(ADDR_WIDTH-1):0] {ra_top_ports[0:-1]};                      // read addresses\n"
+                # f"input [(ADDR_WIDTH-1):0] {wa_top_ports[0:-1]};                      // read addresses\n"
+                # f"input [DATA_WIDTH-1:0]    {w_top_ports[0:-1]};                      // data to write\n"
+                # f"output reg [DATA_WIDTH-1:0] {r_top_ports[0:-1]};                    // data read from memory\n"
+    file.write( f"reg [ADDR_WIDTH-1:0]   {wa_regd_top_ports[0:-1]};                     // registered wa\n"
                 f"reg [DATA_WIDTH-1:0]   {w_regd_top_ports[0:-1]};                    // registered wa\n"
                 f"reg [{write_ports-1}:0] enW_regd;                                   // registered enW\n"
-                f"//reg [(ADDR_WIDTH-1):0] addr[3:0];\n"
                 f"reg [DATA_WIDTH:0] dIn[{write_ports-1}:0];                          // Data to Write in Mem Banks\n")
 
     #dOut from all memory banks (Port Definition)
@@ -111,13 +128,7 @@ with open(f"./generate/{op_file_name}.v",'w') as file:
     file.write("always@(posedge clk)\n"
                "begin\n")
     #always block before BRAM instantiation
-    split_w_top_ports = w_top_ports.split(sep=',')
-    split_w_regd_top_ports = w_regd_top_ports.split(sep=',')
-    split_wa_top_ports = wa_top_ports.split(sep=',')
-    split_wa_regd_top_ports = wa_regd_top_ports.split(sep=',')
 
-    split_r_top_ports = r_top_ports.split(sep=',')
-    split_ra_top_ports = ra_top_ports.split(sep=',')
 
     for i in range(0,len(split_w_top_ports)-1):
         file.write(f"{split_wa_regd_top_ports[i]}<={split_wa_top_ports[i]};\n")
@@ -144,7 +155,7 @@ with open(f"./generate/{op_file_name}.v",'w') as file:
     for i in range(1, read_ports+1):
         where_dIn = np.where(dIn_order == -i)
         where_dIn = ["dOut" + str(s) for s in where_dIn[0]]
-        file.write(f"r{i} = {' ^ '.join(where_dIn)};\n")
+        file.write(f"o_r{i} = {' ^ '.join(where_dIn)};\n")
 
     file.write("end\n"
                "endmodule\n")
