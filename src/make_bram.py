@@ -7,11 +7,13 @@ import two_port_sram
 
 read_ports   = 2
 write_ports  = 2
+word_size    = 32
+size         = 4096
 op_file_name = "xor_2r_2w"
 
 argumentList = sys.argv[1:]
-options      = "hr:w:o:"
-long_options = ["help",'read-ports=','write-ports=','output=']
+options      = "hr:w:d:s:o:"
+long_options = ["help",'read-ports=','write-ports=','word-size=','size=','output=']
 try:
     args,vals = getopt.getopt(argumentList,options,long_options)
     for arg,val in args:
@@ -22,6 +24,8 @@ XOR Memory Generator (Optons and Arguments)
 -h  --help          Output Help
 -r  --read-port     Number of Read Ports
 -w  --write-port    Number of Write Ports
+-d  --word-size     Word Size in Bits
+-s  --size          Memory Size in Bytes
 -o  --output        Output File Name
             """)
         elif arg in ("-r","--read-ports"):
@@ -31,6 +35,10 @@ XOR Memory Generator (Optons and Arguments)
         elif arg in ("-w","--write-ports"):
             write_ports = int(val)
             assert write_ports  > 1, f"number greater than 1 expected, got: {write_ports}"
+        elif arg in ("-d","--word-size"):
+            size        = int(val)
+        elif arg in ("-s","--size"):
+            size        = int(val)
         elif arg in ("-o","--output"):
             op_file_name = str(val)
 except getopt.error as err:
@@ -80,8 +88,8 @@ if not os.path.isdir('./generate'):
 with open(f"./generate/{op_file_name}.v",'w') as file:
     # file.write(f"module xor_memory(clk,enW,{ra_top_ports}{r_top_ports}{wa_top_ports}{w_top_ports[0:-1]});")
     file.write(f"module xor_memory(clk,enW,{ra_top_ports}{r_top_ports}{wa_top_ports}{w_top_ports[0:-1]});\n")
-    file.write( "parameter ADDR_WIDTH = 10;\n"
-                "parameter DATA_WIDTH = 8;\n"
+    file.write( f"parameter ADDR_WIDTH = {int(np.ceil(np.log2(size/(word_size/8))))};\n"
+                f"parameter DATA_WIDTH  = {word_size};\n"
                 "input clk;\n"
                 f"input [{write_ports-1}:0] enW;                                      // Write Enable\n"
                 f"input [(ADDR_WIDTH-1):0] {ra_top_ports[0:-1]};                      // read addresses\n"
@@ -122,7 +130,7 @@ with open(f"./generate/{op_file_name}.v",'w') as file:
     for i in range(0,i_count):
         print(''),
         for j in range(0,j_count):
-            file.write(f'''simple_dual_port_ram #(.ADDR_WIDTH(ADDR_WIDTH)) stage{i*j_count+j}(.data(dIn[{i}]),
+            file.write(f'''simple_dual_port_ram #(.ADDR_WIDTH(ADDR_WIDTH),.DATA_WIDTH=(DATA_WIDTH)) stage{i*j_count+j}(.data(dIn[{i}]),
                 .write_addr(wa{i+1}_regd),.read_addr({"wa" if j < write_ports-1 else "ra"}{order.flatten()[i*j_count+j]}),.we(enW_regd[{i}]),.clk(clk),.q(dOut{i*j_count+j}));\n''')
 
     file.write("always @ (*)\n"
