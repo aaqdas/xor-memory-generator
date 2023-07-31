@@ -1,12 +1,42 @@
 import numpy as np
+import getopt
+import sys
+import os
 import two_port_sram
 
 
-read_ports =  int(input("Enter Number of Read Ports: "))
-write_ports = int(input("Enter Number of Write Ports: "))
+read_ports   = 2
+write_ports  = 2
+op_file_name = "xor_2r_2w"
 
-assert write_ports > 1, f"number greater than 1 expected, got: {write_ports}"
-assert read_ports  > 1, f"number greater than 1 expected, got: {read_ports}"
+argumentList = sys.argv[1:]
+options      = "hr:w:o:"
+long_options = ["help",'read-ports=','write-ports=','output=']
+try:
+    args,vals = getopt.getopt(argumentList,options,long_options)
+    for arg,val in args:
+        if arg in ("-h","--help"):
+            print("""
+XOR Memory Generator (Optons and Arguments)
+
+-h  --help          Output Help
+-r  --read-port     Number of Read Ports
+-w  --write-port    Number of Write Ports
+-o  --output        Output File Name
+            """)
+        elif arg in ("-r","--read-ports"):
+            read_ports =  int(val)
+            # print(type(read_ports))
+            assert read_ports > 1, f"number greater than 1 expected, got: {read_ports}"
+        elif arg in ("-w","--write-ports"):
+            write_ports = int(val)
+            assert write_ports  > 1, f"number greater than 1 expected, got: {write_ports}"
+        elif arg in ("-o","--output"):
+            op_file_name = str(val)
+except getopt.error as err:
+        print (str(err))
+        exit()
+
 
 
 intermediate_order = np.zeros(write_ports-1,dtype=int)
@@ -44,8 +74,10 @@ for i in range(0,write_ports):
     wa_top_ports = wa_top_ports + 'wa' + str((i + 1)) + ','
     wa_regd_top_ports = wa_regd_top_ports + f'wa{str((i+1))}_regd' + ','
 
-# print(w_top_ports.split(sep=','))
-with open('xor_memory.v','w') as file:
+if not os.path.isdir('./generate'):
+    os.mkdir('./generate')
+
+with open(f"./generate/{op_file_name}.v",'w') as file:
     # file.write(f"module xor_memory(clk,enW,{ra_top_ports}{r_top_ports}{wa_top_ports}{w_top_ports[0:-1]});")
     file.write(f"module xor_memory(clk,enW,{ra_top_ports}{r_top_ports}{wa_top_ports}{w_top_ports[0:-1]});\n")
     file.write( "parameter ADDR_WIDTH = 10;\n"
