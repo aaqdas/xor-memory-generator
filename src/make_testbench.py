@@ -102,6 +102,15 @@ with open(f"./generate/tb/{op_file_name}_tb.v",'w') as file:
                    f"\n"
                    f"initial\n"
                    f"begin\n")
+        
+        file.write(f"i_enW = {write_ports}'b{write_ports*'0'};\n")
+        for i in range(0,write_ports):
+            file.write(f"{split_wa_top_ports[i]} = 0;\n")
+            file.write(f"{split_w_top_ports[i]}  = 0;\n")
+        for i in range(0,read_ports):
+            file.write(f"{split_ra_top_ports[i%read_ports]} = 0;\n")
+        
+        file.write(f"#10;\n") 
 
         port_addresses = list()
 
@@ -110,20 +119,33 @@ with open(f"./generate/tb/{op_file_name}_tb.v",'w') as file:
             port_addresses = port_addresses + [random.getrandbits(address_width)]
 
         if read_ports < write_ports:
+            file.write(f"i_enW = {write_ports}'b{write_ports*'1'};\n")
             for i in range(0,write_ports):
                 file.write(f"{split_wa_top_ports[i]} = {port_addresses[i]};\n")
                 file.write(f"{split_w_top_ports[i]}  = {random.getrandbits(data_width)};\n")
-            file.write(f"#20;")
+            file.write(f"#20;\n") 
             for i in range(0,write_ports):
-                if(i == read_ports - 1): file.write(f"#20;")
+                file.write(f"i_enW = {write_ports}'b{write_ports*'0'};\n")
+                if(i == read_ports): file.write(f"#20;")
+                file.write(f"{split_ra_top_ports[i%read_ports]} = {port_addresses[i]};\n")
+        elif read_ports == write_ports:
+            file.write(f"i_enW = {write_ports}'b{write_ports*'1'};\n")
+            for i in range(0,write_ports):
+                file.write(f"{split_wa_top_ports[i]} = {port_addresses[i]};\n")
+                file.write(f"{split_w_top_ports[i]}  = {random.getrandbits(data_width)};\n")
+            file.write(f"#20;\n") 
+            for i in range(0,read_ports):
+                file.write(f"i_enW = {write_ports}'b{write_ports*'0'};\n")
                 file.write(f"{split_ra_top_ports[i]} = {port_addresses[i]};\n")
         else:
+            file.write(f"i_enW = {write_ports}'b{write_ports*'1'};\n")
             for i in range(0,read_ports):
-                if(i == write_ports - 1): file.write(f"#20;\n")
-                file.write(f"{split_wa_top_ports[i]} = {port_addresses[i]};\n")
-                file.write(f"{split_w_top_ports[i]}  = {random.getrandbits(data_width)};\n")
+                if(i == write_ports): file.write(f"#10;\n")
+                file.write(f"{split_wa_top_ports[i%write_ports]} = {port_addresses[i]};\n")
+                file.write(f"{split_w_top_ports[i%write_ports]}  = {random.getrandbits(data_width)};\n")
             file.write(f"#20;\n")
             for i in range(0,read_ports):
+                file.write(f"i_enW = {write_ports}'b{write_ports*'0'};\n")
                 file.write(f"{split_ra_top_ports[i]} = {port_addresses[i]};\n")
         file.write(f"end\nendmodule")
             
