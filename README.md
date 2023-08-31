@@ -17,12 +17,25 @@ sudo apt-get install python3-pip
 pip install numpy
 ```
 
-# Running the Script in Linux
-To run the script, use the following command
+# Running the Verilog Generator and Verification in Linux
+To run everything including script generation and ModelSim Simulation, use the following command
 ```
-python3 ./src/make_bram.py -r ${read_ports} -w ${write_ports} -o ${filename}
+make all READ_PORTS=<NUMBER_OF_READ_PORTS> WRITE_PORTS=<NUMBER_OF_WRITE_PORTS> WORD_SIZE=<WORD_SIZE_IN_BITS> SIZE=<MEMORY_SIZE>
 ```
-The verilog file will be generated in ```./generated/``` directory.
+
+# Running the Verilog Generator in Linux
+To run the Verilog Generator, use the following command
+```
+make xor READ_PORTS=<NUMBER_OF_READ_PORTS> WRITE_PORTS=<NUMBER_OF_WRITE_PORTS> WORD_SIZE=<WORD_SIZE_IN_BITS> SIZE=<MEMORY_SIZE>
+```
+The verilog file will be generated in ```./generated/``` directory and test bench will be inside```./generated/tb```.
+
+# Running the Verification Simulation in Linux
+To run the simulation, enter the ModelSim directory in the ```MODEL_SIM``` field and then use the following command
+```
+make test READ_PORTS=<NUMBER_OF_READ_PORTS> WRITE_PORTS=<NUMBER_OF_WRITE_PORTS> WORD_SIZE=<WORD_SIZE_IN_BITS> SIZE=<MEMORY_SIZE>
+```
+
 
 # References
 1. Charles Eric Laforest, Ming G. Liu, Emma Rae Rapati, and J. Gregory Steffan. 2012. Multi-ported memories for FPGAs via XOR. In Proceedings of the ACM/SIGDA international symposium on Field Programmable Gate Arrays (FPGA '12). Association for Computing Machinery, New York, NY, USA, 209–218. https://doi.org/10.1145/2145694.2145730
